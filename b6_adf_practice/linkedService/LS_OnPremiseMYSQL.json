@@ -1,0 +1,29 @@
+{
+	"name": "LS_OnPremiseMYSQL",
+	"type": "Microsoft.DataFactory/factories/linkedservices",
+	"properties": {
+		"annotations": [],
+		"type": "MySql",
+		"typeProperties": {
+			"server": "127.0.0.1",
+			"port": 3306,
+			"database": "b6_mysqldb",
+			"username": "root",
+			"sslMode": 1,
+			"useSystemTrustStore": 0,
+			"password": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "LS_KEyvault",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "KVmysqlsecret"
+			},
+			"driverVersion": "v2"
+		},
+		"connectVia": {
+			"referenceName": "SelfHosted-Runtime",
+			"type": "IntegrationRuntimeReference"
+		}
+	}
+}

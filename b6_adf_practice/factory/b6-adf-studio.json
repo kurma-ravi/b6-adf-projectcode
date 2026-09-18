@@ -1,0 +1,15 @@
+{
+	"name": "b6-adf-studio",
+	"properties": {
+		"trustModeClaimForMi": {
+			"value": "Disabled",
+			"editable": true
+		}
+	},
+	"location": "centralindia",
+	"identity": {
+		"type": "SystemAssigned",
+		"principalId": "51b483f0-65a4-443c-9fe7-ee1699326a63",
+		"tenantId": "c86f2b40-619b-455a-922c-ddf5b319ae1b"
+	}
+}

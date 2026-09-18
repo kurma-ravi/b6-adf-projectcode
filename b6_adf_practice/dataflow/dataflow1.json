@@ -1,0 +1,83 @@
+{
+	"name": "dataflow1",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "ds_df_src",
+						"type": "DatasetReference"
+					},
+					"name": "sourceSalesFiles"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "DelimitedText2",
+						"type": "DatasetReference"
+					},
+					"name": "sinkSaleTransformation"
+				}
+			],
+			"transformations": [
+				{
+					"name": "selectColumns"
+				},
+				{
+					"name": "filterInvoiceInvalid"
+				},
+				{
+					"name": "splitCountry"
+				},
+				{
+					"name": "aggregateInvoice"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          InvoiceNo as string,",
+				"          StockCode as string,",
+				"          Description as string,",
+				"          Quantity as short,",
+				"          InvoiceDate as timestamp,",
+				"          UnitPrice as double,",
+				"          CustomerID as double,",
+				"          Country as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     partitionBy('hash', 1)) ~> sourceSalesFiles",
+				"sourceSalesFiles select(mapColumn(",
+				"          InvoiceNo,",
+				"          Description,",
+				"          InvoiceDate,",
+				"          UnitPrice,",
+				"          CustomerID,",
+				"          Country",
+				"     ),",
+				"     partitionBy('hash', 1),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectColumns",
+				"selectColumns filter(InvoiceNo != '537669',",
+				"     partitionBy('hash', 1)) ~> filterInvoiceInvalid",
+				"filterInvoiceInvalid split(Country == 'United Kingdom',",
+				"     Country == 'Germany',",
+				"     disjoint: false,",
+				"     partitionBy('hash', 1)) ~> splitCountry@(UK, Germany, Other)",
+				"splitCountry@UK aggregate(groupBy(InvoiceNo),",
+				"     UnitPrice = sum(toInteger(UnitPrice)),",
+				"     partitionBy('hash', 1)) ~> aggregateInvoice",
+				"aggregateInvoice sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     umask: 0022,",
+				"     preCommands: [],",
+				"     postCommands: [],",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> sinkSaleTransformation"
+			]
+		}
+	}
+}

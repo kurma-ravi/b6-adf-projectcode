@@ -1,0 +1,182 @@
+{
+	"name": "dataflow3",
+	"properties": {
+		"type": "MappingDataFlow",
+		"typeProperties": {
+			"sources": [
+				{
+					"dataset": {
+						"referenceName": "DelimitedText6",
+						"type": "DatasetReference"
+					},
+					"name": "sourceDL"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable1",
+						"type": "DatasetReference"
+					},
+					"name": "sourceSQL"
+				}
+			],
+			"sinks": [
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable2",
+						"type": "DatasetReference"
+					},
+					"name": "sinkDB"
+				},
+				{
+					"dataset": {
+						"referenceName": "AzureSqlTable3",
+						"type": "DatasetReference"
+					},
+					"name": "sinkDBexstRecords"
+				}
+			],
+			"transformations": [
+				{
+					"name": "derivedColumnCSV"
+				},
+				{
+					"name": "derivedColumnSQL"
+				},
+				{
+					"name": "existsHascode"
+				},
+				{
+					"name": "derivedColumnCSVActive"
+				},
+				{
+					"name": "selectCSV"
+				},
+				{
+					"name": "existsEmpID"
+				},
+				{
+					"name": "existsHC"
+				},
+				{
+					"name": "derivedColumn1"
+				},
+				{
+					"name": "alterRowActive"
+				},
+				{
+					"name": "selectCols"
+				}
+			],
+			"scriptLines": [
+				"source(output(",
+				"          Employee_ID as integer,",
+				"          First_Name as string,",
+				"          Salary as integer,",
+				"          Location as string",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     ignoreNoFilesFound: false,",
+				"     partitionBy('hash', 1)) ~> sourceDL",
+				"source(output(",
+				"          SurrKey as integer,",
+				"          Emp_ID as integer,",
+				"          FName as string,",
+				"          Salary as integer,",
+				"          Loc as string,",
+				"          Is_Active as integer",
+				"     ),",
+				"     allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     isolationLevel: 'READ_UNCOMMITTED',",
+				"     format: 'table',",
+				"     partitionBy('hash', 1)) ~> sourceSQL",
+				"sourceDL derive(Hashcode = md5(Employee_ID,First_Name,Salary,Location),",
+				"     partitionBy('hash', 1)) ~> derivedColumnCSV",
+				"sourceSQL derive(HashCode = md5(Emp_ID,FName,Salary,Loc)) ~> derivedColumnSQL",
+				"derivedColumnCSV, derivedColumnSQL exists(derivedColumnCSV@Hashcode == derivedColumnSQL@HashCode,",
+				"     negate:true,",
+				"     broadcast: 'auto')~> existsHascode",
+				"existsHascode derive(Is_Active = 1,",
+				"     partitionBy('hash', 1)) ~> derivedColumnCSVActive",
+				"derivedColumnCSVActive select(mapColumn(",
+				"          Employee_ID,",
+				"          First_Name,",
+				"          Salary,",
+				"          Location,",
+				"          Is_Active",
+				"     ),",
+				"     partitionBy('hash', 1),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectCSV",
+				"derivedColumnSQL, derivedColumnCSV exists(Emp_ID == Employee_ID,",
+				"     negate:false,",
+				"     broadcast: 'auto')~> existsEmpID",
+				"existsEmpID, existsHascode exists(derivedColumnSQL@HashCode == derivedColumnCSV@Hashcode,",
+				"     negate:true,",
+				"     broadcast: 'auto')~> existsHC",
+				"existsHC derive(Is_Active = 0,",
+				"     partitionBy('hash', 1)) ~> derivedColumn1",
+				"derivedColumn1 alterRow(updateIf(true()),",
+				"     partitionBy('hash', 1)) ~> alterRowActive",
+				"alterRowActive select(mapColumn(",
+				"          SurrKey,",
+				"          Emp_ID,",
+				"          FName,",
+				"          Salary,",
+				"          Loc,",
+				"          Is_Active",
+				"     ),",
+				"     partitionBy('hash', 1),",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true) ~> selectCols",
+				"selectCSV sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          SurrKey as integer,",
+				"          Emp_ID as integer,",
+				"          FName as string,",
+				"          Salary as integer,",
+				"          Loc as string,",
+				"          Is_Active as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:true,",
+				"     updateable:false,",
+				"     upsertable:false,",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     mapColumn(",
+				"          Emp_ID = Employee_ID,",
+				"          FName = First_Name,",
+				"          Salary,",
+				"          Loc = Location,",
+				"          Is_Active",
+				"     ),",
+				"     partitionBy('hash', 1)) ~> sinkDB",
+				"selectCols sink(allowSchemaDrift: true,",
+				"     validateSchema: false,",
+				"     input(",
+				"          SurrKey as integer,",
+				"          Emp_ID as integer,",
+				"          FName as string,",
+				"          Salary as integer,",
+				"          Loc as string,",
+				"          Is_Active as integer",
+				"     ),",
+				"     deletable:false,",
+				"     insertable:false,",
+				"     updateable:true,",
+				"     upsertable:false,",
+				"     keys:['SurrKey'],",
+				"     format: 'table',",
+				"     skipDuplicateMapInputs: true,",
+				"     skipDuplicateMapOutputs: true,",
+				"     errorHandlingOption: 'stopOnFirstError',",
+				"     partitionBy('hash', 1)) ~> sinkDBexstRecords"
+			]
+		}
+	}
+}

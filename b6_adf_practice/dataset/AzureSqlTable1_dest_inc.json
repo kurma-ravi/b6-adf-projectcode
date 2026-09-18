@@ -1,0 +1,17 @@
+{
+	"name": "AzureSqlTable1_dest_inc",
+	"properties": {
+		"linkedServiceName": {
+			"referenceName": "LS_AzSQLDB",
+			"type": "LinkedServiceReference"
+		},
+		"annotations": [],
+		"type": "AzureSqlTable",
+		"schema": [],
+		"typeProperties": {
+			"schema": "dbo",
+			"table": "orders_target"
+		}
+	},
+	"type": "Microsoft.DataFactory/factories/datasets"
+}
