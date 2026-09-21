@@ -1,0 +1,30 @@
+{
+	"name": "12_PL_setvariable",
+	"properties": {
+		"activities": [
+			{
+				"name": "SetVariable_Date",
+				"type": "SetVariable",
+				"dependsOn": [],
+				"policy": {
+					"secureOutput": false,
+					"secureInput": false
+				},
+				"userProperties": [],
+				"typeProperties": {
+					"variableName": "yesterday_date",
+					"value": {
+						"value": "@formatDateTime(adddays(utcNow(),-1),'yyyy-MM-dd')",
+						"type": "Expression"
+					}
+				}
+			}
+		],
+		"variables": {
+			"yesterday_date": {
+				"type": "String"
+			}
+		},
+		"annotations": []
+	}
+}
